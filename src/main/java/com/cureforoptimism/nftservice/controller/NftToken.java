@@ -8,6 +8,7 @@ import com.cureforoptimism.nftservice.domain.nft.Chain;
 import com.cureforoptimism.nftservice.domain.nft.Token;
 import com.cureforoptimism.nftservice.repository.BaseNftRepository;
 import com.cureforoptimism.nftservice.repository.TokenRepository;
+import com.cureforoptimism.nftservice.service.ImageCacheService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.math.BigInteger;
@@ -16,7 +17,6 @@ import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.NoSuchAlgorithmException;
@@ -53,12 +53,13 @@ import org.web3j.tx.gas.ContractGasProvider;
 import org.web3j.tx.gas.DefaultGasProvider;
 
 @RestController
-@RequestMapping("/api/nft")
+@RequestMapping("/api/v1/nft")
 @AllArgsConstructor
 @Slf4j
 public class NftToken {
   private final TokenRepository tokenRepository;
   private final BaseNftRepository baseNftRepository;
+  private ImageCacheService imageCacheService;
 
   @RequestMapping(method = RequestMethod.POST)
   @ResponseStatus(HttpStatus.OK)
@@ -96,26 +97,14 @@ public class NftToken {
     if (nft != null) {
       final var imageRef = nft.getImage();
 
-      // TODO: Handle SVG's and IPFS and JPEGs. Maybe time to bring in Tika.
-      // TODO: Check persistent cache first
-      HttpClient httpClient = HttpClient.newHttpClient();
-      HttpRequest request;
-
-      try {
-        request = HttpRequest.newBuilder().GET().uri(new URI(imageRef)).build();
-      } catch (URISyntaxException ex) {
-        log.error("Invalid URI for HTTP request: " + imageRef, ex);
-        return ResponseEntity.unprocessableEntity().build();
-      }
-
-      try {
-        final var response = httpClient.send(request, BodyHandlers.ofByteArray());
+      final byte[] imageBytes =
+          imageCacheService.getImageBytes(contractAddess, id, imageRef).orElse(null);
+      if (imageBytes != null) {
+        // TODO: Handle SVG's and IPFS and JPEGs. Maybe time to bring in Tika.
 
         return ResponseEntity.ok()
             .contentType(org.springframework.http.MediaType.IMAGE_PNG)
-            .body(response.body());
-      } catch (IOException | InterruptedException ex) {
-        log.warn("Unable to retrieve image: " + imageRef, ex);
+            .body(imageBytes);
       }
     }
 
