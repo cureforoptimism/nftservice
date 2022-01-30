@@ -1,0 +1,13 @@
+{
+  "properties": [
+    {
+      "name": "discord-enabled",
+      "type": "java.lang.String",
+      "description": "Enables/Disables Discord functionality."
+    },
+    {
+      "name": "initialize",
+      "type": "java.lang.String",
+      "description": "Run once to initialize database."
+    }
+  ] }
