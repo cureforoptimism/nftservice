@@ -16,6 +16,7 @@ import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.NoSuchAlgorithmException;
@@ -84,6 +85,41 @@ public class NftToken {
             .collect(Collectors.toSet());
 
     return ResponseEntity.ok(tokens);
+  }
+
+  @GetMapping("/image/{contract_address}/{id}")
+  public ResponseEntity<byte[]> getTokenImage(
+      @PathVariable("contract_address") String contractAddess, @PathVariable("id") Long id) {
+    final BaseNft nft =
+        baseNftRepository.findByToken_ContractIdAndTokenId(contractAddess, id).orElse(null);
+
+    if (nft != null) {
+      final var imageRef = nft.getImage();
+
+      // TODO: Handle SVG's and IPFS and JPEGs. Maybe time to bring in Tika.
+      // TODO: Check persistent cache first
+      HttpClient httpClient = HttpClient.newHttpClient();
+      HttpRequest request;
+
+      try {
+        request = HttpRequest.newBuilder().GET().uri(new URI(imageRef)).build();
+      } catch (URISyntaxException ex) {
+        log.error("Invalid URI for HTTP request: " + imageRef, ex);
+        return ResponseEntity.unprocessableEntity().build();
+      }
+
+      try {
+        final var response = httpClient.send(request, BodyHandlers.ofByteArray());
+
+        return ResponseEntity.ok()
+            .contentType(org.springframework.http.MediaType.IMAGE_PNG)
+            .body(response.body());
+      } catch (IOException | InterruptedException ex) {
+        log.warn("Unable to retrieve image: " + imageRef, ex);
+      }
+    }
+
+    return ResponseEntity.internalServerError().build();
   }
 
   @Async

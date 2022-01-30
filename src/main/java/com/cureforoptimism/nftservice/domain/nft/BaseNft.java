@@ -29,7 +29,7 @@ public class BaseNft {
   @Setter public Long tokenId;
   public String name;
 
-  @Lob public String image;
+  @Getter @Lob public String image;
 
   @Getter
   @OneToMany(mappedBy = "baseNft")
