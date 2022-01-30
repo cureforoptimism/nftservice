@@ -108,9 +108,9 @@ public class NftToken {
       } else {
         return ResponseEntity.notFound().build();
       }
+    } else {
+      return ResponseEntity.notFound().build();
     }
-
-    return ResponseEntity.internalServerError().build();
   }
 
   @Async
