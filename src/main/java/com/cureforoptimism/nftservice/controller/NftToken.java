@@ -105,6 +105,8 @@ public class NftToken {
         return ResponseEntity.ok()
             .contentType(org.springframework.http.MediaType.IMAGE_PNG)
             .body(imageBytes);
+      } else {
+        return ResponseEntity.notFound().build();
       }
     }
 
