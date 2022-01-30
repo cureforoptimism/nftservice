@@ -1,6 +1,7 @@
 package com.cureforoptimism.nftservice.controller;
 
 import com.cureforoptimism.nftservice.domain.dto.NftDto;
+import com.cureforoptimism.nftservice.domain.dto.TokenDto;
 import com.cureforoptimism.nftservice.domain.mapper.NftMapper;
 import com.cureforoptimism.nftservice.domain.nft.Attribute;
 import com.cureforoptimism.nftservice.domain.nft.BaseNft;
@@ -23,7 +24,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.util.ArrayList;
 import java.util.Base64;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -68,8 +68,11 @@ public class NftToken {
   }
 
   @RequestMapping(method = RequestMethod.GET)
-  public ResponseEntity<Set<Token>> getToken() {
-    Set<Token> tokens = new HashSet<>(tokenRepository.findAll());
+  public ResponseEntity<Set<TokenDto>> getTokens() {
+    final var mapper = Mappers.getMapper(NftMapper.class);
+
+    Set<TokenDto> tokens =
+        tokenRepository.findAll().stream().map(mapper::toDto).collect(Collectors.toSet());
 
     return ResponseEntity.ok(tokens);
   }
